@@ -19,12 +19,14 @@ Sửa Sheet → refresh trang là thấy (Google cache khoảng ~5 phút).
 
 ## 1. Tab `Config` (1 dòng dữ liệu)
 
-| shop_name | avatar_url | bio | eyebrow |
-|-----------|-----------|-----|---------|
-| Min’s Shop — Deal Xinh Cho Nàng | https://.../avatar.jpg | Những món xinh xắn... | Tuyển chọn mỗi ngày |
+| shop_name | avatar_url | bio | eyebrow | facebook | instagram | tiktok | youtube | zalo | shopee |
+|-----------|-----------|-----|---------|----------|-----------|--------|---------|------|--------|
+| Min’s Shop — Deal Xinh Cho Nàng | https://.../avatar.jpg | Những món xinh xắn... | Tuyển chọn mỗi ngày | https://facebook.com/... | https://instagram.com/... | https://tiktok.com/@... | | | https://shopee.vn/shop/... |
 
 - `avatar_url` để trống → hiện avatar gradient với chữ cái đầu.
 - `bio`, `eyebrow` để trống được.
+- **Mạng xã hội** (`facebook`, `instagram`, `tiktok`, `youtube`, `zalo`, `shopee`): dán link trang của bạn.
+  Cột nào **để trống thì icon đó tự ẩn** — chỉ hiện những kênh bạn điền, theo thứ tự trên.
 
 ## 2. Tab `Categories`
 

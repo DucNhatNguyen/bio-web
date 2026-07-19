@@ -1,9 +1,27 @@
 import Papa from "papaparse";
 import { TABS, csvUrl, USE_SAMPLE } from "./config";
 import { sampleData } from "./sample";
-import type { Category, Platform, Product, SiteConfig, SiteData } from "./types";
+import type {
+  Category,
+  Platform,
+  Product,
+  SiteConfig,
+  SiteData,
+  SocialLink,
+  SocialPlatform,
+} from "./types";
 
 const PLATFORMS: Platform[] = ["shopee", "tiktok", "lazada"];
+
+// Thứ tự hiển thị icon mạng xã hội; mỗi tên = tên cột trong tab Config.
+const SOCIAL_PLATFORMS: SocialPlatform[] = [
+  "facebook",
+  "instagram",
+  "tiktok",
+  "youtube",
+  "zalo",
+  "shopee",
+];
 
 /** Tải & parse một tab CSV thành mảng object (key = tên cột, đã trim). */
 async function fetchTab(tabName: string): Promise<Record<string, string>[]> {
@@ -27,6 +45,13 @@ function toNumber(v: string, fallback = 9999): number {
   return Number.isFinite(n) && v !== "" ? n : fallback;
 }
 
+function parseSocials(r: Record<string, string>): SocialLink[] {
+  return SOCIAL_PLATFORMS.filter((p) => r[p]).map((p) => ({
+    platform: p,
+    url: r[p],
+  }));
+}
+
 function parseConfig(rows: Record<string, string>[]): SiteConfig {
   const r = rows[0] ?? {};
   return {
@@ -34,6 +59,7 @@ function parseConfig(rows: Record<string, string>[]): SiteConfig {
     avatar_url: r.avatar_url || "",
     bio: r.bio || "",
     eyebrow: r.eyebrow || "",
+    socials: parseSocials(r),
   };
 }
 

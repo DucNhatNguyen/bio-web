@@ -7,6 +7,13 @@ export const sampleData: SiteData = {
     avatar_url: "",
     bio: "Những món xinh xắn, chất lượng, giá tốt được tuyển chọn từ Shopee · TikTok Shop · Lazada. Chạm vào sản phẩm để mua trên sàn nhé!",
     eyebrow: "Tuyển chọn mỗi ngày",
+    socials: [
+      { platform: "facebook", url: "#" },
+      { platform: "instagram", url: "#" },
+      { platform: "tiktok", url: "#" },
+      { platform: "youtube", url: "#" },
+      { platform: "shopee", url: "#" },
+    ],
   },
   categories: [
     { id: "thoi-trang", name: "Thời trang", order: 1 },
