@@ -70,6 +70,30 @@ function normalize(s: string): string {
     .replace(/đ/g, "d");
 }
 
+/* ============================ Analytics (GTM dataLayer) ============================ */
+
+type DataLayer = Record<string, unknown>[];
+
+/** dataLayer do GTM tạo (index.html). Tạo trước nếu GTM chưa kịp nạp. */
+function dataLayer(): DataLayer {
+  const w = window as unknown as { dataLayer?: DataLayer };
+  return (w.dataLayer = w.dataLayer ?? []);
+}
+
+/** Đẩy 1 sự kiện hành vi vào dataLayer để GTM/GA4 bắt. */
+function pushEvent(event: string, params: Record<string, unknown> = {}): void {
+  dataLayer().push({ event, ...params });
+}
+
+/** Gửi 1 lượt xem trang cho route hiện tại (SPA hash-routing). */
+function trackPageView(title: string): void {
+  pushEvent("page_view", {
+    page_title: title,
+    page_location: location.href,
+    page_path: location.pathname + location.hash,
+  });
+}
+
 /* ============================ Router ============================ */
 
 type Route = { view: "home" } | { view: "category"; id: string };
@@ -90,13 +114,16 @@ export function renderApp(app: HTMLElement, data: SiteData): void {
 
     let inner: string;
     let isCategory = false;
+    let title = data.config.shop_name;
     if (route.view === "category") {
       const cat = visibleCats.find((c) => c.id === route.id);
       inner = cat ? categoryView(cat.name, byCat(cat.id)) : notFoundView();
       isCategory = !!cat;
+      title = cat ? `${cat.name} · ${data.config.shop_name}` : `Không tìm thấy · ${data.config.shop_name}`;
     } else {
       inner = homeView(data, visibleCats, byCat);
     }
+    document.title = title;
 
     // Footer chỉ hiển thị ở trang chủ, không hiển thị ở màn danh sách sản phẩm.
     app.innerHTML = `
@@ -107,9 +134,32 @@ export function renderApp(app: HTMLElement, data: SiteData): void {
 
     window.scrollTo({ top: 0, behavior: "auto" });
     if (isCategory) wireProductSearch();
+    trackPageView(title);
   };
 
   window.addEventListener("hashchange", draw);
+
+  // Bắt click bằng event delegation (dùng lại được sau mỗi lần render lại).
+  app.addEventListener("click", (e) => {
+    const el = e.target as HTMLElement;
+
+    const cat = el.closest<HTMLElement>(".cat-card");
+    if (cat) {
+      pushEvent("select_category", { category_name: cat.dataset.cat ?? "" });
+      return;
+    }
+
+    const card = el.closest<HTMLAnchorElement>(".card");
+    if (card) {
+      pushEvent("select_product", {
+        item_name: card.dataset.pname ?? "",
+        item_category: card.dataset.cat ?? "",
+        platform: card.dataset.platform ?? "",
+        link_url: card.href,
+      });
+    }
+  });
+
   draw();
 }
 
@@ -221,7 +271,7 @@ function categoryCard(id: string, name: string, items: Product[], idx: number): 
     : "";
 
   return `
-    <a class="cat-card" href="#/c/${encodeURIComponent(id)}" aria-label="Xem danh mục ${esc(name)}">
+    <a class="cat-card" href="#/c/${encodeURIComponent(id)}" data-cat="${esc(name)}" aria-label="Xem danh mục ${esc(name)}">
       <div class="cat-cover ${cover ? "" : "cat-cover--empty"}" style="--ph:${gradient}">
         ${coverImg}
         <span class="cat-count">${items.length} món</span>
@@ -236,7 +286,7 @@ function categoryCard(id: string, name: string, items: Product[], idx: number): 
 /* ============================ Category detail ============================ */
 
 function categoryView(name: string, items: Product[]): string {
-  const cards = items.map((p, i) => productCard(p, i)).join("");
+  const cards = items.map((p, i) => productCard(p, i, name)).join("");
   return `
     <main class="wrap fade">
       <a class="backlink" href="#/">← Tất cả danh mục</a>
@@ -249,7 +299,7 @@ function categoryView(name: string, items: Product[]): string {
               placeholder="Tìm sản phẩm…" aria-label="Tìm sản phẩm trong ${esc(name)}" />
           </div>
         </div>
-        <div class="grid" id="prod-grid">${cards}</div>
+        <div class="grid" id="prod-grid" data-cat="${esc(name)}">${cards}</div>
         <div class="state" id="search-empty" hidden>
           <div class="state-emoji">🔍</div>
           <p class="state-sub">Không có sản phẩm nào khớp từ khoá.</p>
@@ -265,9 +315,12 @@ function wireProductSearch(): void {
   const empty = document.getElementById("search-empty");
   if (!input || !grid) return;
   const cards = [...grid.querySelectorAll<HTMLElement>(".card")];
+  const catName = grid.dataset.cat ?? "";
+  let searchTimer: number | undefined;
 
   input.addEventListener("input", () => {
-    const q = normalize(input.value.trim());
+    const term = input.value.trim();
+    const q = normalize(term);
     let shown = 0;
     for (const c of cards) {
       const match = q === "" || (c.dataset.name ?? "").includes(q);
@@ -275,6 +328,15 @@ function wireProductSearch(): void {
       if (match) shown++;
     }
     if (empty) empty.hidden = shown > 0;
+
+    // Chỉ gửi sự kiện search khi người dùng ngừng gõ ~700ms và có từ khoá.
+    window.clearTimeout(searchTimer);
+    if (term) {
+      searchTimer = window.setTimeout(
+        () => pushEvent("search", { search_term: term, item_category: catName, results: shown }),
+        700,
+      );
+    }
   });
 }
 
@@ -292,7 +354,7 @@ function notFoundView(): string {
 
 /* ============================ Product card ============================ */
 
-function productCard(p: Product, gradientIdx: number): string {
+function productCard(p: Product, gradientIdx: number, catName: string): string {
   const meta = PLATFORM_META[p.platform];
   const gradient = GRADIENTS[gradientIdx % GRADIENTS.length];
   const media = p.image_url
@@ -304,6 +366,7 @@ function productCard(p: Product, gradientIdx: number): string {
   return `
     <a class="card" href="${esc(p.buy_url)}" target="_blank" rel="noopener noreferrer"
        data-name="${esc(normalize(p.name))}"
+       data-pname="${esc(p.name)}" data-platform="${p.platform}" data-cat="${esc(catName)}"
        aria-label="${esc(p.name)} — mua ngay trên ${meta.label}">
       <div class="thumb ${p.image_url ? "" : "thumb--fallback"}" style="--ph:${gradient}">
         <span class="badge badge--${p.platform}"><span class="badge-glyph">${meta.glyph}</span>${meta.label}</span>
