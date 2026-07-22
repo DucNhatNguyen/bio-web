@@ -154,7 +154,7 @@ export function renderApp(app: HTMLElement, data: SiteData): void {
       pushEvent("select_product", {
         item_name: card.dataset.pname ?? "",
         item_category: card.dataset.cat ?? "",
-        platform: card.dataset.platform ?? "",
+        sale_platform: card.dataset.salePlatform ?? "",
         link_url: card.href,
       });
     }
@@ -366,7 +366,7 @@ function productCard(p: Product, gradientIdx: number, catName: string): string {
   return `
     <a class="card" href="${esc(p.buy_url)}" target="_blank" rel="noopener noreferrer"
        data-name="${esc(normalize(p.name))}"
-       data-pname="${esc(p.name)}" data-platform="${p.platform}" data-cat="${esc(catName)}"
+       data-pname="${esc(p.name)}" data-sale-platform="${p.platform}" data-cat="${esc(catName)}"
        aria-label="${esc(p.name)} — mua ngay trên ${meta.label}">
       <div class="thumb ${p.image_url ? "" : "thumb--fallback"}" style="--ph:${gradient}">
         <span class="badge badge--${p.platform}"><span class="badge-glyph">${meta.glyph}</span>${meta.label}</span>
