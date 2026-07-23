@@ -21,8 +21,8 @@
   --shopee: #ee6c4d;
   --tiktok: #3a2e3a;
   --lazada: #5a63c4;
-  --serif: "Palatino Linotype", "Iowan Old Style", "Book Antiqua", Palatino, Georgia, serif;
-  --sans: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --serif: "Coiny", system-ui, cursive;
+  --sans: "Coiny", system-ui, sans-serif;
 }
 
 * {
