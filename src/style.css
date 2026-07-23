@@ -21,8 +21,8 @@
   --shopee: #ee6c4d;
   --tiktok: #3a2e3a;
   --lazada: #5a63c4;
-  --serif: "Coiny", system-ui, cursive;
-  --sans: "Coiny", system-ui, sans-serif;
+  --serif: "Fraunces", Georgia, "Times New Roman", serif;
+  --sans: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 * {
